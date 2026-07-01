@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LeadFlow AI
 
-## Getting Started
+LeadFlow AI is an AI-native CRM portfolio project for managing leads, pipeline activity, AI-assisted email drafts, lead scoring, and sales insights. The repository is intentionally documentation-driven so coding agents can implement features consistently instead of inventing architecture during each task.
 
-First, run the development server:
+## Project Status
+The project is in foundation phase. The current work creates the Engineering OS: architecture docs, product rules, ADRs, standards, MCP skills, templates, examples, checklists, and living context. Product feature implementation starts after this documentation architecture is frozen.
+
+## Agent Starting Point
+Agents must begin with:
+
+1. `AGENTS.md`
+2. `.context/project-summary.md`
+3. `.context/current-phase.md`
+4. `.context/next-task.md`
+5. `docs/03-adr/`
+6. `docs/02-architecture/architecture.md`
+7. `docs/02-architecture/domain-model.md`
+
+Only then should implementation files be inspected or changed.
+
+## Repository Map
+- `docs/00-project/`: vision, goals, roadmap, principles.
+- `docs/01-product/`: PRD, personas, workflows, permissions, business rules, acceptance criteria.
+- `docs/02-architecture/`: system architecture, domain model, data flow, API, database, security, performance.
+- `docs/03-adr/`: permanent architecture decisions.
+- `docs/04-engineering/`: coding, testing, lifecycle, review, and delivery standards.
+- `docs/05-design/`: CRM layout, dashboard, accessibility, and design system.
+- `docs/06-ai/`: AI architecture, prompts, structured outputs, scoring, drafting, insights, failures.
+- `docs/07-reference/`: quick reference material for agents.
+- `docs/08-deployment/`: deployment, environment, monitoring, and launch readiness.
+- `.mcp/skills/`: repo-local role skills for AI coding agents.
+- `.context/`: living project memory.
+- `templates/`: reusable implementation templates.
+- `examples/`: canonical examples of preferred patterns.
+- `checklists/`: completion and review checklists.
+- `decisions/`: lightweight temporary decisions.
+
+## Development
+Use npm:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No feature work should begin until the relevant documentation, checklist, and template have been read.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Prerequisites
+- Node.js compatible with the installed Next.js version.
+- npm.
+- Local `.env` values only when a feature requires them.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Related Documents
+- `AGENTS.md`
+- `docs/02-architecture/architecture.md`
+- `docs/04-engineering/feature-lifecycle.md`
 
-## Learn More
+## Used By
+- Codex
+- Antigravity
+- Claude Code
+- Human reviewers
 
-To learn more about Next.js, take a look at the following resources:
+## See Also
+- `.mcp/skills/planner/SKILL.md`
+- `checklists/feature.md`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Implementation Notes
+The README is a map, not the authority for architecture. Detailed decisions live in docs and ADRs.

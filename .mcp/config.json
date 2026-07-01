@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    }
+  },
+  "project": {
+    "name": "leadflow-ai",
+    "purpose": "AI-native CRM Engineering OS and implementation workspace",
+    "skillsDirectory": ".mcp/skills"
+  }
+}
