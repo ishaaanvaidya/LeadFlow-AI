@@ -7,6 +7,7 @@ Expected future variables include:
 - `DATABASE_URL`
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL`
+- `NVIDIA_API_KEY` for NVIDIA NIM AI features, optional for CRM-only operation
 - `OPENAI_API_KEY` or provider equivalent
 - `GEMINI_API_KEY` if Gemini is used
 
@@ -15,6 +16,7 @@ Expected future variables include:
 - Only expose browser-safe values with `NEXT_PUBLIC_`.
 - Document new variables in `docs/08-deployment/environment-variables.md`.
 - Fail clearly when required server variables are missing.
+- Optional AI provider variables should fail at the AI feature boundary, not at app startup.
 
 ## Prerequisites
 - `docs/02-architecture/security.md`

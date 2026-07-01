@@ -1,23 +1,26 @@
 # Current Phase
 
-The project is in Phase 1: Engineering OS and foundation.
+The project is in MVP implementation and stabilization.
 
 ## Active Focus
-- Build documentation architecture.
-- Establish agent rules, MCP skills, templates, examples, checklists, context, and decisions.
-- Freeze documentation structure before product feature implementation.
+- Verify end-to-end CRM workflows.
+- Keep DAL, validation, auth, and UI boundaries aligned with the Engineering OS.
+- Polish responsive, accessible, dark-mode CRM surfaces.
+- Keep AI optional and safely degraded.
 
 ## Not Active
-- Authentication implementation.
-- Prisma schema implementation.
-- CRM UI implementation.
-- AI provider integration.
+- Multi-user teams and RBAC.
+- Billing.
+- Native email sending.
+- Calendar sync.
+- Mobile app.
 
 ## Prerequisites
 - `.context/project-summary.md`
 
 ## Related Documents
 - `docs/00-project/roadmap.md`
+- `docs/01-product/PRD.md`
 
 ## Used By
 - Planner agents
@@ -26,4 +29,4 @@ The project is in Phase 1: Engineering OS and foundation.
 - `.context/next-task.md`
 
 ## Implementation Notes
-Do not begin feature implementation until the user explicitly asks after this documentation pass.
+Feature work is active because the user explicitly requested completing the MVP implementation.
