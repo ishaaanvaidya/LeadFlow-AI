@@ -1,0 +1,519 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum LeadScoreValue {
+  HOT
+  WARM
+  COLD
+  UNKNOWN
+}
+
+enum DealStatus {
+  OPEN
+  WON
+  LOST
+}
+
+enum ActivityType {
+  LEAD_CREATED
+  LEAD_UPDATED
+  STAGE_CHANGED
+  NOTE_ADDED
+  EMAIL_DRAFT_GENERATED
+  LEAD_SCORE_UPDATED
+  TASK_CREATED
+  TASK_COMPLETED
+  MEETING_SCHEDULED
+  OTHER
+}
+
+enum LeadSource {
+  WEB
+  REFERRAL
+  COLD_OUTREACH
+  PARTNER
+  EVENT
+  OTHER
+}
+
+// ==========================================
+// AUTHENTICATION MODELS (Better Auth)
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Better Auth Relations
+  sessions      Session[]
+  accounts      Account[]
+
+  // CRM Relations
+  companies       Company[]
+  contacts        Contact[]
+  leads           Lead[]
+  deals           Deal[]
+  pipelines       Pipeline[]
+  tasks           Task[]
+  activities      Activity[]
+  notes           Note[]
+  meetings        Meeting[]
+  leadScores      LeadScore[]
+  emailDrafts     EmailDraft[]
+  aiConversations AIConversation[]
+  promptTemplates PromptTemplate[]
+  notifications   Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String    @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+}
+
+// ==========================================
+// CRM CORE MODELS
+// ==========================================
+
+model Company {
+  id          String    @id @default(cuid())
+  name        String
+  industry    String?
+  website     String?
+  description String?
+  
+  // Owner Scoping
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  contacts    Contact[]
+  leads       Lead[]
+  deals       Deal[]
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([archivedAt])
+}
+
+model Contact {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  jobTitle    String?
+
+  // Company Association
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Owner Scoping
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  leads       Lead[]
+  deals       Deal[]
+  tasks       Task[]
+  meetings    Meeting[]
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([archivedAt])
+}
+
+model Lead {
+  id             String         @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  source         LeadSource?    @default(OTHER)
+  estimatedValue Decimal?
+  score          LeadScoreValue @default(UNKNOWN)
+
+  // Owner Scoping
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Company & Contact Association
+  companyId      String?
+  company        Company?       @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contactId      String?
+  contact        Contact?       @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  // Kanban Pipeline Stage
+  stageId        String
+  stage          PipelineStage  @relation(fields: [stageId], references: [id], onDelete: Restrict)
+
+  // Relations
+  deals          Deal[]
+  tasks          Task[]
+  activities     Activity[]
+  notes          Note[]
+  meetings       Meeting[]
+  leadScores     LeadScore[]
+  emailDrafts    EmailDraft[]
+
+  // Timestamps & Soft Delete
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  archivedAt     DateTime?
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([contactId])
+  @@index([stageId])
+  @@index([archivedAt])
+}
+
+model Pipeline {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+
+  // Owner Scoping
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  stages      PipelineStage[]
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([archivedAt])
+}
+
+model PipelineStage {
+  id         String   @id @default(cuid())
+  name       String
+  position   Int      // Position order in Kanban board
+
+  // Pipeline Association
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+
+  // Relations
+  leads      Lead[]
+  deals      Deal[]
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([pipelineId])
+}
+
+model Deal {
+  id          String        @id @default(cuid())
+  name        String
+  value       Decimal
+  probability Int           @default(0) // Win probability percentage (e.g. 0 - 100)
+  closeDate   DateTime?
+  status      DealStatus    @default(OPEN)
+
+  // Owner Scoping
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relationships
+  leadId      String?
+  lead        Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  companyId   String?
+  company     Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  contactId   String?
+  contact     Contact?      @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  stageId     String
+  stage       PipelineStage @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  activities  Activity[]
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([companyId])
+  @@index([contactId])
+  @@index([stageId])
+  @@index([archivedAt])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  isCompleted Boolean   @default(false)
+
+  // Owner Scoping
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Associations
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([isCompleted])
+  @@index([archivedAt])
+}
+
+model Activity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String
+
+  // Owner Scoping
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Associations
+  leadId      String?
+  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  dealId      String?
+  deal        Deal?        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  // Timestamps (Activities are append-only audit trails, no soft deletes)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([dealId])
+}
+
+model Note {
+  id         String    @id @default(cuid())
+  content    String
+
+  // Owner Scoping
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Lead Association
+  leadId     String
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Timestamps & Soft Delete
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([archivedAt])
+}
+
+model Meeting {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  location    String?
+
+  // Owner Scoping
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Associations
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  // Timestamps & Soft Delete
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  @@index([userId])
+  @@index([leadId])
+  @@index([contactId])
+  @@index([archivedAt])
+}
+
+// ==========================================
+// AI & ANALYTICS SUPPORT MODELS
+// ==========================================
+
+model LeadScore {
+  id          String         @id @default(cuid())
+  score       LeadScoreValue
+  explanation String
+  confidence  Float?
+  signals     Json?          // Key-value snapshot of context signals used for scoring
+
+  // Owner Scoping
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Lead Association
+  leadId      String
+  lead        Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Timestamps (Appends score history over time)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([leadId])
+}
+
+model EmailDraft {
+  id         String   @id @default(cuid())
+  subject    String?
+  body       String
+  tone       String?
+  modelUsed  String?
+  promptUsed String?
+
+  // Owner Scoping
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Lead Association
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([leadId])
+}
+
+model AIConversation {
+  id         String    @id @default(cuid())
+  title      String?
+  summary    String?
+  messages   Json      // Structured list of messages: [{ role: 'user'|'assistant', content: string }]
+
+  // Owner Scoping
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps & Soft Delete
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  @@index([userId])
+  @@index([archivedAt])
+}
+
+model PromptTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  content     String
+  description String?
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+
+  // Scoped template (optional: system-wide if null, user-scoped if set)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String?
+  link      String?
+
+  // Owner Scoping
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+}
